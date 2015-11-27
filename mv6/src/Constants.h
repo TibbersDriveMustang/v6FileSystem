@@ -14,6 +14,12 @@ const std::string Q = "q";
  */
 const int BLOCK_SIZE=512;
 
+/**
+ * Constant Boolean values
+ */
+const bool TRUE = true;
+const bool FALSE = false;
+
 /*
  * Commands that are supported in the modified v6 file system
  */
@@ -29,16 +35,16 @@ typedef enum{
  * Super Block structure
  */
 typedef struct {
-	unsigned short isize;
-	unsigned short fsize;
+	unsigned short isize;		//Number of blocks denoted to inodes
+	unsigned short fsize;		//Total number of blocks
 	unsigned short nfree;
 	unsigned short free[100];
-	unsigned short ninode;
-	unsigned short inode[100];
-	char flock;
-	char ilock;
-	char fmod;
-	unsigned short time[2];
+	unsigned short ninode;		//Not used
+	unsigned short inode[100];	//Not used
+	char flock;					//Not used
+	char ilock;					//Not used
+	char fmod;					//Not used
+	unsigned short time[2];		//Not used
 } superBlock;
 
 /*
@@ -46,12 +52,23 @@ typedef struct {
  */
 typedef struct {
 	unsigned short flags;
-	char nlinks;
-	char uid;
-	char gid;
+	char nlinks;			 	//Not used
+	char uid;					//Not used
+	char gid;					//Not used
 	char size0;
 	unsigned short size1;
 	unsigned short addr[8];
-	unsigned short actime[2];
-	unsigned short modtime[2];
+	unsigned short actime[2];	//Not used
+	unsigned short modtime[2];	//Not used
 } iNode;
+
+//Directory Structure
+typedef struct{
+	unsigned short inodeNumber;
+	char fileName[14];
+}Directory;
+
+/**
+ * Constant number of directory entries in a data block
+ */
+const int numDirectoryEntry = (BLOCK_SIZE/sizeof(Directory));
