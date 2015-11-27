@@ -70,7 +70,6 @@ try{
 				file.write((char *)&iNodeBuffer,calculateInodePadding());
 			}
 
-			log.logger(53,"Size of Directory",(int)sizeof(rootDirectory));
 			//Writing Root Directory
 			//Setting './' character
 			rootDirectory.inodeNumber=1;
@@ -82,8 +81,8 @@ try{
 			strcpy(rootDirectory.fileName,"..");
 			file.write((char *)&rootDirectory,sizeof(rootDirectory));
 
-			//Setting the remaining inodes
-			for(unsigned int j=3; j<=(BLOCK_SIZE/sizeof(rootDirectory)); j++){
+			//Setting the remaining directory entries
+			for(int j=3; j<=numDirectoryEntry; j++){
 				file.write((char *)&rootDirectory,sizeof(rootDirectory));
 			}
 
