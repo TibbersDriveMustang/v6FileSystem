@@ -7,26 +7,17 @@
 
 #ifndef MAKEDIR_H_
 #define MAKEDIR_H_
-
 #include "InitializeFS.h"
 
-using namespace std;
 class MakeDir {
-	Log log1;
 	string dirname;
 	fstream fileSystem;
-	iNode dirNode;
-	Directory dir,emptyDirEntry;
-	superBlock dirSB;
-	int matchedInodeNum;
 public:
 	void setDirectoryName(string);
 	string getDirectoryName(void);
-	void setMatchedDirectoryInode(int);
-	int getMatchedDirectoryInode(void);
 	bool searchDirectoryEntries(void);
-	bool searchFreeDirectoryEntry(void);
-	int getNextFreeInode(void);
+	bool allocateFreeDirectoryEntry(void);
+	int getNextFreeInode(int);
 	int getNextFreeBlock(void);
 	void createDirectory(int, char **);
 	bool checkParameters(int, char **);
