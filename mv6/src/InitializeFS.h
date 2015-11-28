@@ -4,22 +4,21 @@
  *  Created on: 24-Nov-2015
  *      Author: sriee
  */
+#ifndef INITIALIZEFS_H_
+#define INITIALIZEFS_H_
 
 #include <fstream>
 #include <string>
 #include <iostream>
-#include <vector>
 #include <cstdlib>
 #include <cmath>
+#include <cstring>
 #include "Constants.h"
-#include "Log.h"
 
-#ifndef INITIALIZEFS_H_
-#define INITIALIZEFS_H_
 using namespace std;
 
+
 class InitializeFS {
-	Log log;
 	ofstream file;
 	string fsPath;
 	int numOfBlocks,numOfinodes;
@@ -35,6 +34,8 @@ public:
 	void createFileSystem(int argc, char *argv[]);
 	int getInodesBlock(void);
 	int getFreeBlocks(void);
+	int getFreeBlocksIndex(void);
+	int calculateInodePadding(void);
 	void readBlocks(void);	//Used to test the written data
 };
 
