@@ -38,9 +38,9 @@ bool InitializeFS :: checkParameters(int argc, char *argv[]){
  *
  */
 void InitializeFS :: createFileSystem(int argc, char *argv[]){
-superBlock sb;
-iNode node,rootNode;
-Directory rootDirectory;
+superBlock sb = {};
+iNode node = {},rootNode = {};
+Directory rootDirectory = {};
 unsigned short freeHeadChain;
 try{
 	 if(checkParameters(argc,argv)){
@@ -50,12 +50,16 @@ try{
 			sb.isize = getInodesBlock();
 
 			//1 Block is the directory for root node and another block is the head of the free chain list
-			sb.fsize = getFreeBlocks()-2;
+			sb.fsize = getFreeBlocks();
+			sb.ninode = getNumOfInodes();
 			sb.nfree = 100;
+			for(int i=0;i<100;i++){
+				sb.free[i] = (getFreeBlocksIndex() + i)*BLOCK_SIZE;
+			}
 			file.write((char *)&sb,BLOCK_SIZE);
 
 			//Setting up root node
-			rootNode.flags = (rootNode.flags | 0x11000000);
+			rootNode.flags = (rootNode.flags | 0xC0);
 			rootNode.addr[0] = (1+ getInodesBlock())*BLOCK_SIZE;
 			file.write((char *)&rootNode,getSizeOfInode());
 
@@ -82,6 +86,7 @@ try{
 			file.write((char *)&rootDirectory,sizeof(rootDirectory));
 
 			//Setting the remaining directory entries
+			rootDirectory = {};
 			for(int j=3; j<=numDirectoryEntry; j++){
 				file.write((char *)&rootDirectory,sizeof(rootDirectory));
 			}
@@ -244,16 +249,13 @@ int InitializeFS :: getSizeOfInode(void){
 void InitializeFS :: readBlocks(){
 	iNode node;
 	ifstream infile;
-	Directory dir;
-	int seek;
 	infile.open("fsaccess",ios::binary);
 	if(infile.is_open()){
 		infile.seekg(BLOCK_SIZE);
+		for(int l=1;l<=300;l++){
 		infile.read((char *)&node,getSizeOfInode());
-		seek = node.addr[0];
-		infile.seekg(seek);
-		infile.read((char *)&dir,sizeof(dir));
-		cout <<"\nRoot =" <<dir.inodeNumber <<"\t" <<dir.fileName <<endl;
+		cout <<"Flag value = " <<node.flags <<endl;
+		}
 	}
 	infile.close();
 }
