@@ -19,8 +19,8 @@ public:
 	bool allocateFreeDirectoryEntry(void);
 	int getNextFreeInode(int);
 	int getNextFreeBlock(void);
-	void createDirectory(int, char **);
-	bool checkParameters(int, char **);
+	void createDirectory(int argc, char *argv[]);
+	bool checkParameters(int argc, char *argv[]);
 };
 
 #endif /* MAKEDIR_H_ */
