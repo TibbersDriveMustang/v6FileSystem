@@ -24,3 +24,8 @@ void Log::logger(int lineNumber, std::string comment,int arg){
 void Log::logger(int lineNumber, std::string comment,std::string arg){
 	std::cout <<"***" <<lineNumber <<" " <<comment <<" = " <<arg << std::endl;
 }
+
+void Log::logger(int lineNumber, std::string comment,float arg){
+	std::cout.precision(3);
+	std::cout <<"***" <<lineNumber <<" " <<comment <<" = " <<arg << std::endl;
+}

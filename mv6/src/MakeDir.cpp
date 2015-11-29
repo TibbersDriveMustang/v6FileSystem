@@ -17,6 +17,7 @@
 
 void MakeDir :: createDirectory(int argc, char *argv[]){
 	if(checkParameters(argc, argv)){
+		fileSystem.open("fsaccess",ios::binary | ios::in | ios::out);
 		if(searchDirectoryEntries()){ //Searched Directory has been found
 			cout <<"!!Directory present in mv6 File System!!" <<endl;
 			return;
@@ -24,6 +25,7 @@ void MakeDir :: createDirectory(int argc, char *argv[]){
 			if(allocateFreeDirectoryEntry())
 			cout <<"!!New Directory Entry allocated!!" <<endl;
 		}
+		//fileSystem.close();
 	}
 }
 
@@ -34,23 +36,23 @@ void MakeDir :: createDirectory(int argc, char *argv[]){
  *@return false - If the parameter is invalid
  */
 bool MakeDir :: checkParameters(int argc, char *argv[]){
-	bool valid = FALSE;
+	bool validCP = FALSE;
 	string name = argv[2];
 	if(argc >3){
 		cout <<"!!Entered Invalid number of arguments!!!" <<endl;
-		valid = FALSE;
+		validCP = FALSE;
 	}else if((name.size()!=0) && (name.size()>13)){
 		cout <<"!!Maximum number of character supported for Directory name is 13!!" <<endl;
 		cout <<"!!Resizing " <<name.size() <<" characters ";
 		name.resize(13);
 		cout <<"to 13 characters:" <<name <<endl;
 		setDirectoryName(name);
-		valid = TRUE;
+		validCP = TRUE;
 	}else{
 		setDirectoryName(name);
-		valid = TRUE;
+		validCP = TRUE;
 	}
-	return valid;
+	return validCP;
 }
 
 /**
@@ -65,7 +67,6 @@ bool MakeDir :: searchDirectoryEntries(){
 	int dataBlock;
 	iNode searchDirectoryInode = {};
 	try{
-	fileSystem.open("fsaccess",ios::binary | ios::in | ios::out);
 
 	if(fileSystem.is_open()){
 
@@ -105,7 +106,6 @@ bool MakeDir :: searchDirectoryEntries(){
 		cout<<"!!Could not find File System file!!" <<endl;
 		valid = FALSE;
 	}
-	fileSystem.close();
 	}catch(exception& e){
 		cout<<"Exception at searchDirectoryEntries " <<endl;
 	}
@@ -120,18 +120,17 @@ return valid;
  * @return false - If new directory entry is not allocated
  */
 bool MakeDir :: allocateFreeDirectoryEntry(){
-	bool valid = FALSE;
+	bool valid = FALSE,breakJ=TRUE,breakI=TRUE;
 	int dataBlock,currentCursorPos,freeInode,freeBlock,numInode;
 	superBlock allocateSB = {};
 	iNode allocateInode = {};
 	Directory emptyDirEntry = {};
 	try{
-	fileSystem.open("fsaccess",ios::binary | ios::in | ios::out);
 
 	if(fileSystem.is_open()){
 		fileSystem.seekg(0);
 		//Reading super block to know the number of inodes
-		fileSystem.read((char *)&allocateSB,BLOCK_SIZE);
+		fileSystem.read((char *)&allocateSB,sizeof(superBlock));
 		numInode= allocateSB.ninode;
 
 		//Moving to inodes block
@@ -141,7 +140,7 @@ bool MakeDir :: allocateFreeDirectoryEntry(){
 		fileSystem.read((char *)&allocateInode,sizeof(iNode));
 
 		//Traversing through the data block of root node to search for free directory entry
-		for(int i=0;i<8;i++){
+		for(int i=0;i<8 && breakI;i++){
 		dataBlock = allocateInode.addr[i];
 
 		//Accessing the root directory
@@ -149,15 +148,15 @@ bool MakeDir :: allocateFreeDirectoryEntry(){
 			fileSystem.seekg(dataBlock);
 
 			//Checking for each directory entry
-			for(int j=0;j<numDirectoryEntry;j++){
+			for(int j=0;j<numDirectoryEntry && breakJ;j++){
 				Directory dir = {};		//Reseting directory structure
 				fileSystem.read((char *)&dir,sizeof(Directory));
 				if(dir.inodeNumber ==0){
 
 					currentCursorPos = ((int)fileSystem.tellg()-(int)sizeof(Directory));
 					freeInode = getNextFreeInode(numInode);
-					freeBlock = getNextFreeBlock();
-
+					//freeBlock = getNextFreeBlock();
+					freeBlock = 61952;
 
 					//Allocate the inode
 					iNode newInodeToAllocate = {};
@@ -192,18 +191,16 @@ bool MakeDir :: allocateFreeDirectoryEntry(){
 						fileSystem.write((char *)&emptyDirEntry,sizeof(Directory));
 					}
 					valid = TRUE;
-					break;
+					breakJ = FALSE;
 				}
-			if(valid) break;
 			}
 		}else{
 			//TODO add free block content here
 		}
-		if(valid) break;
+		if(valid) breakI = FALSE;
 		dataBlock = 0;
 	}
 	}
-	fileSystem.close();
 	}catch(exception& e){
 		cout<<"Exception at searchFreeDirectoryEntry " <<endl;
 	}
@@ -218,7 +215,7 @@ bool MakeDir :: allocateFreeDirectoryEntry(){
  * @return free inode number
  */
 int MakeDir :: getNextFreeInode(int numInode){
-	bool breakFromLoop = FALSE;
+	bool breakFromLoop = TRUE;	//To come out of loop when a free inode is found
 	int freeNode;
 
 	try{
@@ -228,15 +225,14 @@ int MakeDir :: getNextFreeInode(int numInode){
 		//Moving to inodes block
 		fileSystem.seekg(BLOCK_SIZE);
 
-		for(int i=1;i<=numInode;i++){
+		for(int i=1;i<=numInode && breakFromLoop;i++){
 			iNode freeNodeSearch = {};
 			fileSystem.read((char *)&freeNodeSearch,sizeof(iNode));
 			//Checking whether inode is allocated or not
 			if((freeNodeSearch.flags & 0x80) !=  0x80){
 				freeNode = i;
-				breakFromLoop = TRUE;
+				breakFromLoop = FALSE;
 			}
-			if(breakFromLoop) break;			  //To come out of loop when a free inode is found
 		}
 	}catch(exception& e){
 		cout<<"Exception at getNextFreeInode " <<endl;
@@ -251,7 +247,7 @@ int MakeDir :: getNextFreeInode(int numInode){
  * @return free block
  */
 int MakeDir :: getNextFreeBlock(void){
-	int freeBlock,freeChainBlock;
+	int freeBlk,freeChainBlock;
 	unsigned short freeHeadChain;
 	superBlock freeBlockSB = {};
 	try{
@@ -276,14 +272,14 @@ int MakeDir :: getNextFreeBlock(void){
 				freeBlockSB.free[k] = freeHeadChain + k;
 			}
 
-			freeBlock = freeBlockSB.free[--freeBlockSB.nfree];
+			freeBlk = (int)freeBlockSB.free[--freeBlockSB.nfree];
 		}else{
-			freeBlock = (int)freeBlockSB.free[--freeBlockSB.nfree];
+			freeBlk = (int)freeBlockSB.free[--freeBlockSB.nfree];
 		}
 	}catch(exception& e){
 		cout<<"Exception at getNextFreeBlock " <<endl;
 	}
-	return freeBlock;
+	return freeBlk;
 }
 
 /**
