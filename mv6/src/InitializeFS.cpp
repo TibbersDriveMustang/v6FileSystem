@@ -2,7 +2,7 @@
  * InitializeFS.cpp
  *
  *  Created on: 24-Nov-2015
- *      Author: sriee
+ *      Author: Hongyi Guo
  */
 
 #include "InitializeFS.h"
@@ -18,7 +18,7 @@
 bool InitializeFS :: checkParameters(int argc, char *argv[]){
 	bool valid=false;
 	if (argc < 5){
-		cout <<"!!Insufficient number of arguments!!" <<endl;
+		cout <<"Insufficient number of arguments" <<endl;
 		valid = false;
 	}else{
 		this->setFileSystemPath(argv[2]);
@@ -32,97 +32,109 @@ bool InitializeFS :: checkParameters(int argc, char *argv[]){
 /**
  * Initialized the super block ,inode block and data blocks of the file system
  *
- *@param argc Argument count
- *@param *argv[] Argument array
+ *@param argc :Argument count
+ *@param *argv[] :Argument array
  *@throws Exception when unkown block is reached, invalid block is traveresed
  *
  */
+
 void InitializeFS :: createFileSystem(int argc, char *argv[]){
-superBlock sb = {};
-iNode node = {},rootNode = {};
-Directory rootDirectory = {};
-unsigned short freeHeadChain;
-try{
-	 if(checkParameters(argc,argv)){
-	 file.open("fsaccess",ios::binary | ios::app);
-		if (file.is_open()){
-			//Initializing the file system
-			sb.isize = getInodesBlock();
+    
+    superBlock SB = {};
+    iNode node = {},rootNode = {};
+    Directory rootDirectory = {};
+    unsigned short freeHeadChain;
+    
+    try{
+        if(checkParameters(argc,argv)){
+            file.open("fsaccess",ios::binary | ios::app);
+            if (file.is_open()){
+                //Initializing the file system
+                SB.isize = getInodesBlock();
 
-			//1 Block is the directory for root node and another block is the head of the free chain list
-			sb.fsize = getFreeBlocks();
-			sb.ninode = getNumOfInodes();
-			sb.nfree = 100;
-			for(int i=0;i<100;i++){
-				sb.free[i] = (getFreeBlocksIndex() + i)*BLOCK_SIZE;
-			}
-			file.write((char *)&sb,BLOCK_SIZE);
+                //1 Block is the directory for root node and another block is the head of the free chain list
+                SB.fsize = getFreeBlocks();
+                SB.ninode = getNumOfInodes();
+                SB.nfree = 100;
+                
+                for(int i=0;i<100;i++){
+                    SB.free[i] = (getFreeBlocksIndex() + i)*BLOCK_SIZE;
+                }
+                
+                file.write((char *)&SB,BLOCK_SIZE);
 
-			//Setting up root node
-			rootNode.flags = (rootNode.flags | 0xC0);
-			rootNode.addr[0] = (1+ getInodesBlock())*BLOCK_SIZE;
-			file.write((char *)&rootNode,getSizeOfInode());
+                //Setting up root node
+                rootNode.flags = (rootNode.flags | 0xC0);
+                rootNode.addr[0] = (1+ getInodesBlock())*BLOCK_SIZE;
+                file.write((char *)&rootNode,getSizeOfInode());
 
-			//Writing inodes block to the file system
-			for(int i=2;i<=getNumOfInodes();i++){
-				file.write((char *)&node,getSizeOfInode());
-			}
+                //Writing inodes block to the file system
+                for(int i=2;i<=getNumOfInodes();i++){
+                    file.write((char *)&node,getSizeOfInode());
+                }
 
-			//Padding empty characters to complete block
-			if(calculateInodePadding() !=0 ){
-				char *iNodeBuffer = new char[calculateInodePadding()];
-				file.write((char *)&iNodeBuffer,calculateInodePadding());
-			}
+                //Padding empty characters to complete block
+                if(calculateInodePadding() !=0 ){
+                    char *iNodeBuffer = new char[calculateInodePadding()];
+                    file.write((char *)&iNodeBuffer,calculateInodePadding());
+                }
 
-			//Writing Root Directory
-			//Setting './' character
-			rootDirectory.inodeNumber=1;
-			strcpy(rootDirectory.fileName,".");
-			file.write((char *)&rootDirectory,sizeof(rootDirectory));
+                //Writing Root Directory
+                //Setting './' character
+                rootDirectory.inodeNumber=1;
+                strcpy(rootDirectory.fileName,".");
+                file.write((char *)&rootDirectory,sizeof(rootDirectory));
 
-			//Setting '..' character
-			rootDirectory.inodeNumber=1;
-			strcpy(rootDirectory.fileName,"..");
-			file.write((char *)&rootDirectory,sizeof(rootDirectory));
+                //Setting '..' character
+                rootDirectory.inodeNumber=1;
+                strcpy(rootDirectory.fileName,"..");
+                file.write((char *)&rootDirectory,sizeof(rootDirectory));
 
-			//Setting the remaining directory entries
-			rootDirectory = {};
-			for(int j=3; j<=numDirectoryEntry; j++){
-				file.write((char *)&rootDirectory,sizeof(rootDirectory));
-			}
+                //Setting the remaining directory entries
+                rootDirectory = {};
+                for(int j=3; j<=numDirectoryEntry; j++){
+                    file.write((char *)&rootDirectory,sizeof(rootDirectory));
+                }
 
-			//Empty Char buffer
-			char *buffer = new char[BLOCK_SIZE];
-			char *headChainBuffer;
+                //Empty Char buffer
+                char *buffer = new char[BLOCK_SIZE];
+                char *headChainBuffer;
 
-			//Writing free data blocks
-			//If the number of free blocks are <100 no need to set free head chain values
-			if((getFreeBlocks() - getFreeBlocksIndex()) < 100){
-				for(int i=getFreeBlocksIndex();i<=getFreeBlocks();i++){
-					file.write((char *)&buffer,BLOCK_SIZE);
-				}
-			}else { //Checks for every 100th block and assigns the head chain values
-				for(int i=getFreeBlocksIndex();i<=getFreeBlocks();i++){
-				//To assign the head chain value link to the next free list . two condition are checked here
-				//Wether the cursor position is traversed 100 blocks starting from the index and
-				//Making sure the head chain don't point to blocks > than our free data blocks
-					if((i % 100 == getFreeBlocksIndex()) && ((getFreeBlocks() - i) >= 100)){
+                //Writing free data blocks
+                //If the number of free blocks are <100 no need to set free head chain values
+                if((getFreeBlocks() - getFreeBlocksIndex()) < 100){
+                    for(int i=getFreeBlocksIndex();i<=getFreeBlocks();i++){
+                        file.write((char *)&buffer,BLOCK_SIZE);
+                    }
+                }
+                else {
+                    //Checks for every 100th block and assigns the head chain values
+                    for(int i=getFreeBlocksIndex();i<=getFreeBlocks();i++){
+                        //To assign the head chain value link to the next free list . two condition are checked here
+                        //Wether the cursor position is traversed 100 blocks starting from the index and
+                        //Making sure the head chain don't point to blocks > than our free data blocks
+                        if((i % 100 == getFreeBlocksIndex()) && ((getFreeBlocks() - i) >= 100)){
 							freeHeadChain = i+100;
 							file.write((char *)&freeHeadChain,2);
 							headChainBuffer = new char[BLOCK_SIZE - 2];
 							file.write((char *)&headChainBuffer,BLOCK_SIZE - 2);
-					}else{
-						file.write((char *)&buffer,BLOCK_SIZE);
-					}
-				}
-			}
-		}
-	 file.close();
-	 }else{
-		return;
-	 }
+                        }
+                        else
+                        {
+                            file.write((char *)&buffer,BLOCK_SIZE);
+                        }
+                    }
+                }
+            }
+            file.close();
+        }
+        else{
+            return;
+        }
 
-	}catch(exception& e){
+    }
+    
+    catch(exception& e){
 		cout <<"Exception at createFileSystem method" <<endl;
 	}
 
@@ -146,12 +158,12 @@ int InitializeFS :: calculateInodePadding(void){
  * @return inPB Number of blocks for inodes
  */
 int InitializeFS :: getInodesBlock(void){
-	float sizeOfInode, numInodesBlock, numOfInodes,blockSize;
+	float size_Inode, numInodesBlock, num_Inodes,blockSize;
 	int inPB;
-	sizeOfInode = getSizeOfInode();
-	numOfInodes = getNumOfInodes();
+	size_Inode = getSizeOfInode();
+	num_Inodes = getNumOfInodes();
 	blockSize = BLOCK_SIZE;
-	numInodesBlock = (sizeOfInode * numOfInodes)/blockSize;
+	numInodesBlock = (size_Inode * num_Inodes)/blockSize;
 	inPB = ceil(numInodesBlock);
 	return inPB;
 }

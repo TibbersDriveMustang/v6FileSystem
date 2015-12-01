@@ -2,7 +2,7 @@
  * MakeDir.h
  *
  *  Created on: 26-Nov-2015
- *      Author: sriee
+ *      Author: Hongyi Guo
  */
 
 #ifndef MAKEDIR_H_

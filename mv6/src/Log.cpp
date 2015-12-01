@@ -2,7 +2,7 @@
  * Log.cpp
  *
  *  Created on: 24-Nov-2015
- *      Author: sriee
+ *      Author: Hongyi Guo
  */
 
 #include "Log.h"

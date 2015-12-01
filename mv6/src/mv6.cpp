@@ -1,6 +1,6 @@
 //============================================================================
 // Name        : mv6.cpp
-// Author      : Sriee
+// Author      : Hongyi Guo
 // Version     :
 // Copyright   : Your copyright notice
 // Description : Hello World in C++, Ansi-style
@@ -40,25 +40,32 @@ int Entry::getCommandType(){
 
 bool Entry::isValidCommand(string command){
 	bool valid = false;
+    
 	if (INITFS.compare(command)==0){
 		valid = true;
 		this->setCommandType(static_cast<int>(initfs));
-	}else if (CP_IN.compare(command)==0){
+	}
+    else if (CP_IN.compare(command)==0){
 		valid = true;
 		this->setCommandType(static_cast<int>(cpin));
-	}else if (CP_OUT.compare(command)==0){
+	}
+    else if (CP_OUT.compare(command)==0){
 		valid = true;
 		this->setCommandType(static_cast<int>(cpout));
-	}else if (MK_DIR.compare(command)==0){
+	}
+    else if (MK_DIR.compare(command)==0){
 		valid = true;
 		this->setCommandType(static_cast<int>(mkdir));
-	}else if (Q.compare(command)==0){
+	}
+    else if (Q.compare(command)==0){
 		valid = true;
 		this->setCommandType(static_cast<int>(q));
-	}else{
+	}
+    else{
 		valid = false;
 	}
-	return valid;
+	
+    return valid;
 }
 
 
@@ -67,24 +74,33 @@ int main(int argc,char *args[]) {
 	string firstArgument=args[1];
 	//Creating class instances
 	Entry entry(firstArgument);
-	InitializeFS fs;
-	MakeDir mkd;
-	if(entry.isValidCommand(firstArgument)){
-		cout<<"!!Entered Valid Command!!" <<endl;
-	}else{
-		cout<<"!!Entered Invalid Command!!\nTry Again...." <<endl;
+	
+    InitializeFS FS;
+	
+    MakeDir MKD;
+	
+    if(entry.isValidCommand(firstArgument)){
+		cout<<"Valid Command" <<endl;
+	}
+    else{
+		cout<<"Invalid Command" <<endl;
 		exit(0);
 	}
+    
 	switch(entry.getCommandType()){
-		case initfs: fs.createFileSystem(argc,args);
-					 cout <<"!!!Created File System Successfully!!!";
-					 fs.readBlocks();
-					 break;
+		case initfs:
+            FS.createFileSystem(argc,args);
+            cout <<"Created File System: "<<endl;
+            cout <<"Name: "<<args[1]<<endl;
+            cout <<"Total Number of Blocks: "<<args[2]<<endl;
+            cout <<"Total NUmber of i-nodes: "<<args[3]<<endl;
+            FS.readBlocks();
+            break;
 		case cpin:  entry.printCommand(); break;
 		case cpout: entry.printCommand(); break;
-		case mkdir: mkd.createDirectory(argc,args);
+		case mkdir: MKD.createDirectory(argc,args);
 					break;
-		default: cout<<"!!Entered Invalid Command!!\nTry Again...." <<endl; break;
+		default: cout<<"Invalid Command" <<endl; break;
 	}
 
 	return 0;

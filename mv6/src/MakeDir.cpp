@@ -2,7 +2,7 @@
  * MakeDir.cpp
  *
  *  Created on: 26-Nov-2015
- *      Author: sriee
+ *      Author: Hongyi Guo
  */
 
 #include "MakeDir.h"

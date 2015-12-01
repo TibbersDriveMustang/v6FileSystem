@@ -2,7 +2,7 @@
  * InitializeFS.h
  *
  *  Created on: 24-Nov-2015
- *      Author: sriee
+ *      Author: Hongyi Guo
  */
 #ifndef INITIALIZEFS_H_
 #define INITIALIZEFS_H_
