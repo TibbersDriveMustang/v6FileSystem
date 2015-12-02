@@ -58,12 +58,12 @@ void InitializeFS :: createFileSystem(int argc, char *argv[]){
                 SB.nfree = 100;
                 
                 for(int i=0;i<100;i++){
-                    SB.free[i] = (getFreeBlocksIndex() + i)*BLOCK_SIZE;
+                    SB.free[i] = (getFreeBlocksIndex() + i)*BLOCK_SIZE;  //Blocks not been assigned
                 }
                 
-                file.write((char *)&SB,BLOCK_SIZE);
+                file.write((char *)&SB,BLOCK_SIZE);                     //Write SuperBlock into file
 
-                //Setting up root node
+                //Setting up root node                                  root node for data blocks start???
                 rootNode.flags = (rootNode.flags | 0xC0);       //?????
                 
                 rootNode.addr[0] = (1+ getInodesBlock())*BLOCK_SIZE;
@@ -79,14 +79,19 @@ void InitializeFS :: createFileSystem(int argc, char *argv[]){
                 //might have empty space need to be remain empty
                 //1 block = 512 bytes
                 //1 char = 1 byte
+                //inode = 32 bytes
+                //16 inodes = 1 block
                 
                 if(calculateInodePadding() !=0 ){
                     char *iNodeBuffer = new char[calculateInodePadding()];
                     file.write((char *)&iNodeBuffer,calculateInodePadding());
                 }
-
+                
+                //inode 1 is reserved for the root directory
+                //each i-node represents one file
                 //Writing Root Directory
                 //Setting './' character
+                
                 rootDirectory.inodeNumber=1;
                 strcpy(rootDirectory.fileName,".");
                 file.write((char *)&rootDirectory,sizeof(rootDirectory));
@@ -182,7 +187,7 @@ int InitializeFS :: getInodesBlock(void){
  */
 int InitializeFS :: getFreeBlocks(void){
 	int freeBlockCount;
-	freeBlockCount = (getNumOfBlocks() - (getInodesBlock() + 2));
+	freeBlockCount = (getNumOfBlocks() - (getInodesBlock() + 2));  //blocks not been assigned to inodes
 	return freeBlockCount;
 }
 
@@ -194,7 +199,7 @@ int InitializeFS :: getFreeBlocks(void){
  */
 int InitializeFS :: getFreeBlocksIndex(void){
 	int freeBlockIndex;
-	freeBlockIndex = getNumOfBlocks() - getFreeBlocks() + 1;
+	freeBlockIndex = getNumOfBlocks() - getFreeBlocks() + 1;  //how many blocks have been assigned but not used yet
 	return freeBlockIndex;
 }
 

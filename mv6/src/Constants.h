@@ -47,9 +47,8 @@ typedef struct {
 	unsigned short time[2];		//Not used
 } superBlock;
 
-/*
- * I-Nodes structure
- */
+//I-Nodes structure
+//32 bytes long
 typedef struct {
 	unsigned short flags;       //indicate the type of i-node
 	char nlinks;			 	//Not used
@@ -63,9 +62,11 @@ typedef struct {
 } iNode;
 
 //Directory Structure
+//16 bytes long
+//first 2 bytes -> i-number(the number of i-node)
 typedef struct{
-	unsigned short inodeNumber;
-	char fileName[14];
+	unsigned short inodeNumber;  //first 2 bytes
+	char fileName[14]; //bytes 2 - 15  null padded on the right
 }Directory;
 
 /**
