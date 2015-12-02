@@ -64,16 +64,22 @@ void InitializeFS :: createFileSystem(int argc, char *argv[]){
                 file.write((char *)&SB,BLOCK_SIZE);
 
                 //Setting up root node
-                rootNode.flags = (rootNode.flags | 0xC0);
+                rootNode.flags = (rootNode.flags | 0xC0);       //?????
+                
                 rootNode.addr[0] = (1+ getInodesBlock())*BLOCK_SIZE;
                 file.write((char *)&rootNode,getSizeOfInode());
 
-                //Writing inodes block to the file system
+                //Writing all inodes block to the file system
                 for(int i=2;i<=getNumOfInodes();i++){
                     file.write((char *)&node,getSizeOfInode());
                 }
 
                 //Padding empty characters to complete block
+                //multiple inodes will be put into one block,thus the last block
+                //might have empty space need to be remain empty
+                //1 block = 512 bytes
+                //1 char = 1 byte
+                
                 if(calculateInodePadding() !=0 ){
                     char *iNodeBuffer = new char[calculateInodePadding()];
                     file.write((char *)&iNodeBuffer,calculateInodePadding());
@@ -145,27 +151,27 @@ void InitializeFS :: createFileSystem(int argc, char *argv[]){
  *
  * @return paddingSize empty spaces to be added to hanging inode block
  */
+
 int InitializeFS :: calculateInodePadding(void){
 	int paddingSize;
 	paddingSize =  (getInodesBlock() * BLOCK_SIZE) - (getNumOfInodes() * getSizeOfInode());
 	return paddingSize;
 }
 
-/**
- * Calculates the number of blocks that will be allocated to inodes. The calculated value is rounded
- * up to the nearest integer
- *
- * @return inPB Number of blocks for inodes
+/*
+ * @return Total Number of blocks for all inodes
+ *  The calculated value is rounded up
  */
+
 int InitializeFS :: getInodesBlock(void){
 	float size_Inode, numInodesBlock, num_Inodes,blockSize;
-	int inPB;
-	size_Inode = getSizeOfInode();
+	int totalBlock;
+	size_Inode = getSizeOfInode();   //fixed size
 	num_Inodes = getNumOfInodes();
 	blockSize = BLOCK_SIZE;
 	numInodesBlock = (size_Inode * num_Inodes)/blockSize;
-	inPB = ceil(numInodesBlock);
-	return inPB;
+	totalBlock = ceil(numInodesBlock);
+	return totalBlock;
 }
 
 /**
@@ -237,10 +243,9 @@ void InitializeFS :: setNumOfInodes(int n2){
 	this->numOfinodes = n2;
 }
 
-/**
- * Getter method for getting the total number of inodes used by the modified v6 file system
- *
- * @return numOfinodes Total number of inodes
+
+/*
+  * @return Total number of inodes
  */
 int InitializeFS :: getNumOfInodes(void){
 	return this->numOfinodes;
@@ -249,7 +254,7 @@ int InitializeFS :: getNumOfInodes(void){
 /**
  * Getter method for getting size of inodes
  *
- * @return size of inodes
+ * @return size of inode (fixed)
  */
 int InitializeFS :: getSizeOfInode(void){
 	return sizeof(iNode);

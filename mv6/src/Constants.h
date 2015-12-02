@@ -38,7 +38,7 @@ typedef struct {
 	unsigned short isize;		//Number of blocks denoted to inodes
 	unsigned short fsize;		//Total number of blocks
 	unsigned short nfree;
-	unsigned short free[100];
+	unsigned short free[100];   //free[0] is block number of the head of another free-chain block
 	unsigned short ninode;		//Not used
 	unsigned short inode[100];	//Not used
 	char flock;					//Not used
@@ -51,7 +51,7 @@ typedef struct {
  * I-Nodes structure
  */
 typedef struct {
-	unsigned short flags;
+	unsigned short flags;       //indicate the type of i-node
 	char nlinks;			 	//Not used
 	char uid;					//Not used
 	char gid;					//Not used
