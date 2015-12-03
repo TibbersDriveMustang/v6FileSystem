@@ -19,11 +19,11 @@ void MakeDir :: createDirectory(int argc, char *argv[]){
 	if(checkParameters(argc, argv)){
 		fileSystem.open("fsaccess",ios::binary | ios::in | ios::out);
 		if(searchDirectoryEntries()){ //Searched Directory has been found
-			cout <<"!!Directory present in mv6 File System!!" <<endl;
+			cout <<"Directory exist in File System" <<endl;
 			return;
 		}else{
 			if(allocateFreeDirectoryEntry())
-			cout <<"!!New Directory Entry allocated!!" <<endl;
+                cout <<"New Directory Created" <<endl;
 		}
 		//fileSystem.close();
 	}
@@ -39,9 +39,10 @@ bool MakeDir :: checkParameters(int argc, char *argv[]){
 	bool validCP = FALSE;
 	string name = argv[2];
 	if(argc >3){
-		cout <<"!!Entered Invalid number of arguments!!!" <<endl;
+		cout <<"Invalid number of arguments for 'mkdir' " <<endl;
 		validCP = FALSE;
-	}else if((name.size()!=0) && (name.size()>13)){
+	}
+    else if((name.size()!=0) && (name.size()>13)){
 		cout <<"!!Maximum number of character supported for Directory name is 13!!" <<endl;
 		cout <<"!!Resizing " <<name.size() <<" characters ";
 		name.resize(13);
@@ -66,50 +67,56 @@ bool MakeDir :: searchDirectoryEntries(){
 	bool valid = FALSE;
 	int dataBlock;
 	iNode searchDirectoryInode = {};
-	try{
+    try{
 
-	if(fileSystem.is_open()){
+        if(fileSystem.is_open()){
 
-	//Moving to inodes block
-	fileSystem.seekg(BLOCK_SIZE);
+            //Moving to inodes block
+            fileSystem.seekg(BLOCK_SIZE);
 
-	//Read the content of root node which is the first iNode in iNodes block
-	fileSystem.read((char *)&searchDirectoryInode,sizeof(iNode));
+            //Read the content of root node which is the first iNode in iNodes block
+            fileSystem.read((char *)&searchDirectoryInode,sizeof(iNode));
 
-	//Traversing through the data block of root node to search for free directory entry
-	for(int i=0;i<8;i++){
-	dataBlock = searchDirectoryInode.addr[i];
-		//Accessing the root directory
-		if(dataBlock != 0){
-			fileSystem.seekg(dataBlock);
+            //Traversing through the data block of root node to search for free directory entry
+            for(int i=0;i<8;i++){
+                dataBlock = searchDirectoryInode.addr[i];
+                //Accessing the root directory
+                if(dataBlock != 0){
+                    fileSystem.seekg(dataBlock);
 
-			//Checking for each directory entry
-			for(int j=0;j<numDirectoryEntry;j++){
-				Directory searchDir={};
-				fileSystem.read((char *)&searchDir,sizeof(Directory));
+                    //Checking for each directory entry
+                    for(int j=0;j<numDirectoryEntry;j++){
+                        Directory searchDir={};
+                        fileSystem.read((char *)&searchDir,sizeof(Directory));
 
-				if(searchDir.inodeNumber !=0){
-					if(getDirectoryName().compare(searchDir.fileName) == 0){
-						valid = TRUE;
-						break;
-					}
-				}
-			}
-		if(valid) break;
-		dataBlock =0;
-		}else{
-			valid = FALSE;
-			break;
-		}
-	}
-	}else{
-		cout<<"!!Could not find File System file!!" <<endl;
-		valid = FALSE;
-	}
-	}catch(exception& e){
+                        if(searchDir.inodeNumber !=0){
+                            if(getDirectoryName().compare(searchDir.fileName) == 0){
+                                valid = TRUE;
+                                break;
+                            }
+                        }
+                    }
+                    if(valid) break;
+                    dataBlock =0;
+                }
+                else
+                {
+                    valid = FALSE;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            cout<<"Could not find File System file" <<endl;
+            valid = FALSE;
+        }
+    }
+    catch(exception& e)
+    {
 		cout<<"Exception at searchDirectoryEntries " <<endl;
 	}
-return valid;
+    return valid;
 }
 
 /**
@@ -120,90 +127,114 @@ return valid;
  * @return false - If new directory entry is not allocated
  */
 bool MakeDir :: allocateFreeDirectoryEntry(){
-	bool valid = FALSE,breakJ=TRUE,breakI=TRUE;
-	int dataBlock,currentCursorPos,freeInode,freeBlock,numInode;
-	superBlock allocateSB = {};
-	iNode allocateInode = {};
-	Directory emptyDirEntry = {};
-	try{
+    cout<<"Allocating FreeDirectoryEntry()"<<endl;
+	
+    bool valid = FALSE,breakJ=TRUE,breakI=TRUE;
+	
+    int dataBlock,currentCursorPos,freeInode,freeBlock,numInode;
+	
+    superBlock allocateSB = {};
+	
+    iNode allocateInode = {};
+	
+    Directory emptyDirEntry = {};
+	
+    try{
 
-	if(fileSystem.is_open()){
-		fileSystem.seekg(0);
-		//Reading super block to know the number of inodes
-		fileSystem.read((char *)&allocateSB,sizeof(superBlock));
-		numInode= allocateSB.ninode;
+        if(fileSystem.is_open()){
+            fileSystem.seekg(0);
+            //Reading super block to know the number of inodes
+            fileSystem.read((char *)&allocateSB,sizeof(superBlock));
+            numInode= allocateSB.ninode;
+            cout<<"Number of Inode in the system: "<<numInode<<endl;
 
-		//Moving to inodes block
-		fileSystem.seekg(BLOCK_SIZE);
+            //Moving to inodes block
+            fileSystem.seekg(BLOCK_SIZE);
 
-		//Read the content of root node which is the first iNode in iNodes block
-		fileSystem.read((char *)&allocateInode,sizeof(iNode));
+            //Read the content of root node which is the first iNode in iNodes block
+            cout<<"Reading root node"<<endl;                        //=======================
+            fileSystem.read((char *)&allocateInode,sizeof(iNode));
 
-		//Traversing through the data block of root node to search for free directory entry
-		for(int i=0;i<8 && breakI;i++){
-		dataBlock = allocateInode.addr[i];
+            //Traversing through the data block of root node to search for free directory entry
+            for(int i=0;i<8 && breakI;i++){
+                dataBlock = allocateInode.addr[i];
 
-		//Accessing the root directory
-		if(dataBlock != 0){
-			fileSystem.seekg(dataBlock);
+                //Accessing the root directory
+                if(dataBlock != 0){
+                    cout<<"Accessing root directory"<<endl;
+                    fileSystem.seekg(dataBlock);
 
-			//Checking for each directory entry
-			for(int j=0;j<numDirectoryEntry && breakJ;j++){
-				Directory dir = {};		//Reseting directory structure
-				fileSystem.read((char *)&dir,sizeof(Directory));
-				if(dir.inodeNumber ==0){
+                    //Checking for each directory entry
+                    for(int j=0;j<numDirectoryEntry && breakJ;j++){
+                        Directory dir = {};		//Reseting directory structure
+                        fileSystem.read((char *)&dir,sizeof(Directory));
+                        if(dir.inodeNumber ==0){
 
-					currentCursorPos = ((int)fileSystem.tellg()-(int)sizeof(Directory));
-					freeInode = getNextFreeInode(numInode);
-					//freeBlock = getNextFreeBlock();
-					freeBlock = 61952;
+                            currentCursorPos = ((int)fileSystem.tellg()-(int)sizeof(Directory));
+                            freeInode = getNextFreeInode(numInode);   //numInode : total #inode for the system
+                                                                    //freeInode:the next available freeInode number
+                            cout<<"Get next free inode number <= " <<freeInode << endl;
+                            //freeBlock = getNextFreeBlock();
+                            freeBlock = 61952;            //????????????????????????????
 
-					//Allocate the inode
-					iNode newInodeToAllocate = {};
-					fileSystem.seekg(0);
-					fileSystem.seekg(BLOCK_SIZE + (freeInode * (int)sizeof(iNode)));
-					cout <<fileSystem.tellg() <<endl;
-					fileSystem.read((char *)&newInodeToAllocate,sizeof(iNode));
-					newInodeToAllocate.flags = (newInodeToAllocate.flags | 0xC0);
-					newInodeToAllocate.addr[0] = freeBlock;
-					fileSystem.write((char *)&newInodeToAllocate,sizeof(iNode));
+                            //Allocate the inode
+                            iNode newInodeToAllocate = {};
+                            
+                            fileSystem.seekg(0);  //move file index to initial point
+                            cout<<"initial position <= "<<fileSystem.tellg()<<endl;
+                            fileSystem.seekg(BLOCK_SIZE * 2 + ((freeInode - 1) * (int)sizeof(iNode)));
+                            
+                            cout <<"currentCursorPos (the next available inode`s start position) <="<<fileSystem.tellg() <<endl;
+                            
+                            fileSystem.read((char *)&newInodeToAllocate,sizeof(iNode));
+                            newInodeToAllocate.flags = (newInodeToAllocate.flags | 0xC0);   //????
+                            
+                            newInodeToAllocate.addr[0] = freeBlock;
+                            
+                            fileSystem.write((char *)&newInodeToAllocate,sizeof(iNode));
 
-					//Assigning directory name to directory entry
-					fileSystem.seekg(0);
-					fileSystem.seekg(currentCursorPos);
-					cout <<fileSystem.tellg() <<endl;
-					dir.inodeNumber=freeInode;
-					strcpy(dir.fileName,getDirectoryName().c_str());
-					fileSystem.write((char *)&dir,sizeof(Directory));
+                            //Assigning directory name to directory entry
+                            fileSystem.seekg(0);
+                            fileSystem.seekg(currentCursorPos);
+                            
+                            cout <<"currentCursorPos =>"<<fileSystem.tellg() <<endl;
+                            
+                            dir.inodeNumber=freeInode;
+                            strcpy(dir.fileName,getDirectoryName().c_str());
+                            fileSystem.write((char *)&dir,sizeof(Directory));
 
-					//Format the free block  to directory type
-					fileSystem.seekg(0);
-					fileSystem.seekg(freeBlock);
-					cout <<fileSystem.tellg() <<endl;
+                            //Format the free block to directory type
+                            fileSystem.seekg(0);
+                            fileSystem.seekg(freeBlock);
+                            cout <<"currentCursorPos =>"<<fileSystem.tellg() <<endl;
 
-					//Setting './' character
-					Directory newEntry = {};
-					newEntry.inodeNumber=freeInode;
-					strcpy(newEntry.fileName,".");
-					fileSystem.write((char *)&newEntry,sizeof(Directory));
+                            //Setting './' character
+                            cout<<"Setting './' character"<<endl;
+                            Directory newEntry = {};
+                            newEntry.inodeNumber=freeInode;
+                            strcpy(newEntry.fileName,".");
+                            fileSystem.write((char *)&newEntry,sizeof(Directory));
 
-					for(unsigned int j=2; j<=numDirectoryEntry; j++){
-						fileSystem.write((char *)&emptyDirEntry,sizeof(Directory));
-					}
-					valid = TRUE;
-					breakJ = FALSE;
-				}
-			}
-		}else{
+                            for(unsigned int j=2; j<=numDirectoryEntry; j++){
+                                fileSystem.write((char *)&emptyDirEntry,sizeof(Directory));
+                            }
+                            valid = TRUE;
+                            breakJ = FALSE;
+                        }
+                    }
+                }
+                else{
 			//TODO add free block content here
-		}
-		if(valid) breakI = FALSE;
-		dataBlock = 0;
-	}
-	}
-	}catch(exception& e){
+                }
+                if(valid) breakI = FALSE;
+                dataBlock = 0;
+            }
+        }
+    }
+    catch(exception& e){
 		cout<<"Exception at searchFreeDirectoryEntry " <<endl;
 	}
+    cout<<"here"<<endl;
 	return valid;
 }
 
@@ -249,37 +280,41 @@ int MakeDir :: getNextFreeInode(int numInode){
 int MakeDir :: getNextFreeBlock(void){
 	int freeBlk,freeChainBlock;
 	unsigned short freeHeadChain;
-	superBlock freeBlockSB = {};
-	try{
+	superBlock freeBlockSuperBlock = {};
+	
+    try{
 		//Moving the cursor to the start of the file
 		fileSystem.seekg(0);
 
 		//Reading the contents of super block
-		fileSystem.read((char *)&freeBlockSB,BLOCK_SIZE);
+		fileSystem.read((char *)&freeBlockSuperBlock,BLOCK_SIZE);
 
-		if(freeBlockSB.nfree == 1){
-			freeChainBlock = freeBlockSB.free[--freeBlockSB.nfree];
+		if(freeBlockSuperBlock.nfree == 1){
+			freeChainBlock = freeBlockSuperBlock.free[--freeBlockSuperBlock.nfree]; //The header block number of the freeChainBlock
 
-			//Head of the chain points to next head of chain free list
-			fileSystem.seekg(freeChainBlock);
-			fileSystem.read((char *)&freeHeadChain,2);
+			fileSystem.seekg(freeChainBlock); //locate the header block of next freeChainBlock list
+            
+			fileSystem.read((char *)&freeHeadChain,2);  //read first 1 word(2 bytes) of the freeChainBlock which will contain the size of free array
 
-			//reset nfree to 100
-			freeBlockSB.nfree = 100;
+			freeBlockSuperBlock.nfree = 100;    			//reset nfree to 100
 
-			//reset the free array to new free list
+			//reset the free array to new free list of new Super Block
 			for(int k=0;k<100;k++){
-				freeBlockSB.free[k] = freeHeadChain + k;
+				freeBlockSuperBlock.free[k] = freeHeadChain + k;
 			}
 
-			freeBlk = (int)freeBlockSB.free[--freeBlockSB.nfree];
-		}else{
-			freeBlk = (int)freeBlockSB.free[--freeBlockSB.nfree];
+			freeBlk = (int)freeBlockSuperBlock.free[--freeBlockSuperBlock.nfree];
 		}
-	}catch(exception& e){
+        
+        else{
+			freeBlk = (int)freeBlockSuperBlock.free[--freeBlockSuperBlock.nfree];
+		}
+	}
+    catch(exception& e){
 		cout<<"Exception at getNextFreeBlock " <<endl;
 	}
-	return freeBlk;
+    
+    return freeBlk;
 }
 
 /**

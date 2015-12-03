@@ -91,9 +91,9 @@ int main(int argc,char *args[]) {
 		case initfs:
             FS.createFileSystem(argc,args);
             cout <<"Created File System: "<<endl;
-            cout <<"Name: "<<args[1]<<endl;
-            cout <<"Total Number of Blocks: "<<args[2]<<endl;
-            cout <<"Total NUmber of i-nodes: "<<args[3]<<endl;
+            cout <<"Name: "<<args[2]<<endl;
+            cout <<"Total Number of Blocks: "<<args[3]<<endl;
+            cout <<"Total NUmber of i-nodes: "<<args[4]<<endl;
             FS.readBlocks();
             break;
 		case cpin:  entry.printCommand(); break;
